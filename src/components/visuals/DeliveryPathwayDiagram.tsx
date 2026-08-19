@@ -102,7 +102,7 @@ export default function DeliveryPathwayDiagram() {
           TRUNK's coordinate expressed as a literal left-[%]/top-[%] class
           (hand-computed from the shared VIEW_W/VIEW_H below) rather than the
           JSX `style` prop, which src forbids — see css-standards RULE 14. */}
-      <div className="absolute left-[50%] bottom-[-5%] -translate-x-1/2 -translate-y-full text-center">
+      <div className="absolute left-[50%] bottom-[-10%] sm:bottom-[-7%] xl:bottom-[-5%] -translate-x-1/2 -translate-y-full text-center">
         <p className="font-[family-name:var(--font-mono)] text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[color:var(--foreground)]/50 whitespace-nowrap">
           The dose
         </p>

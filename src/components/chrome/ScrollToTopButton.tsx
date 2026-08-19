@@ -89,7 +89,7 @@ export default function ScrollToTopButton() {
     }
 
     returningRef.current = true;
-    const duration = 600;
+    const duration = 12000;
     const startTime = performance.now();
 
     function step(now: number) {

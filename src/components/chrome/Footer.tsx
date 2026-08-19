@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import type { SVGProps } from "react";
 import EkgDivider from "@/components/visuals/EkgDivider";
 import { LinkedInIcon } from "@/components/ui/LinkedInIcon";
+import { scrollToSection } from "@/lib/scrollToSection";
 
 const FOOTER_LINKS = [
   { href: "#innovation", label: "Innovation" },
@@ -65,7 +68,15 @@ export default function Footer() {
 
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-[color:var(--foreground)]/60">
             {FOOTER_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="link-shine">
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToSection(link.href.slice(1));
+                }}
+                className="link-shine"
+              >
                 {link.label}
               </Link>
             ))}

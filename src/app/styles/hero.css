@@ -19,12 +19,17 @@
 
 /* Manual per-breakpoint correction for the "Aerin" mask hole's baseline
    (read via getComputedStyle in Hero.tsx's layout() and subtracted from
-   the measured baseline). The dynamic Range-based measurement is correct
-   in principle, but real devices/browsers introduce enough sub-pixel and
-   viewport-metric variance that a small manual nudge per breakpoint is the
-   practical fix — tune each value by eye against that breakpoint's actual
-   rendering, then leave it. 0px is the geometrically "correct" baseline
-   with no correction; positive values shift the hole down, negative up. */
+   the measured baseline). Reset to 0px everywhere — the previous
+   -78/-85/-90px values were tuned against a since-fixed bug in Hero.tsx's
+   own coordinate math (the mask's x/y were being measured viewport-
+   relative but written as if they were already relative to the SVG's own
+   box). That fix already corrects the ~70-90px discrepancy these offsets
+   were compensating for; applying both was a double-correction that threw
+   "Aerin" noticeably out of position. The Range-based measurement is
+   geometrically exact on its own now — only reach for this token again if
+   a *specific* device/browser shows a genuine few-pixel discrepancy after
+   confirming the base positioning is otherwise correct. Positive values
+   shift the hole down, negative up. */
 #hero {
   --hero-baseline-offset: 0px;
 }
@@ -36,43 +41,41 @@
 /* Extra Small — Portrait phones */
 @media (max-width: 575.98px) {
   #hero {
-    /* Verified against a 375px-wide render — re-check against your own
-       target devices and adjust if needed. */
-    --hero-baseline-offset: -78px;
+    --hero-baseline-offset: 0px;
   }
 }
 
 /* Small — Landscape phones */
 @media (min-width: 576px) and (max-width: 767.98px) {
   #hero {
-    --hero-baseline-offset: -85px;
+    --hero-baseline-offset: 0px;
   }
 }
 
 /* Medium — Tablets */
 @media (min-width: 768px) and (max-width: 991.98px) {
   #hero {
-    --hero-baseline-offset: -90px;
+    --hero-baseline-offset: 0px;
   }
 }
 
 /* Large — Desktops */
 @media (min-width: 992px) and (max-width: 1199.98px) {
   #hero {
-    --hero-baseline-offset: -90px;
+    --hero-baseline-offset: 0px;
   }
 }
 
 /* Extra Large — Large desktops */
 @media (min-width: 1200px) and (max-width: 1399.98px) {
   #hero {
-    --hero-baseline-offset: -90px;
+    --hero-baseline-offset: 0px;
   }
 }
 
 /* XX-Large — Larger desktops */
 @media (min-width: 1400px) {
   #hero {
-    --hero-baseline-offset: -90px;
+    --hero-baseline-offset: 0px;
   }
 }

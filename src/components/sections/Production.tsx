@@ -6,6 +6,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { BTN_GLOW } from "@/lib/buttonStyles";
+import { scrollToSection } from "@/lib/scrollToSection";
 
 export default function Production() {
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -155,6 +156,10 @@ export default function Production() {
           <a
             data-reveal
             href="#capabilities"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection("capabilities");
+            }}
             className={`${BTN_GLOW} mt-8 inline-flex items-center gap-2 px-6 py-3`}
           >
             See our capabilities

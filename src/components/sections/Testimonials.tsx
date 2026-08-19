@@ -9,6 +9,8 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
+const AUTOPLAY_DELAY_MS = 3000;
+
 const CARD_PALETTE: { bg: string; text: string }[] = [
   { bg: "bg-[color:var(--color-ink)]", text: "text-[color:var(--color-paper)]" },
   { bg: "bg-[color:var(--color-culture-dim)]", text: "text-[color:var(--color-paper)]" },
@@ -94,7 +96,7 @@ export default function Testimonials() {
             centeredSlides
             speed={700}
             loop
-            autoplay={{ delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }}
+            autoplay={{ delay: AUTOPLAY_DELAY_MS, disableOnInteraction: false, pauseOnMouseEnter: true }}
             pagination={{ clickable: true }}
             breakpoints={{
               0: { slidesPerView: 1.1, spaceBetween: 20 },

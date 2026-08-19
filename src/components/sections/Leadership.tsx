@@ -88,7 +88,7 @@ export default function Leadership() {
 
         <div className="relative z-10 mt-14 grid grid-cols-2 gap-1 px-1 sm:-mt-24 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 sm:gap-6 sm:px-0">
           {LEADERS.map((leader) => (
-            <div key={leader.name} data-reveal className="group flex flex-col mx-2 sm:mx-4 lg:mx-6">
+            <div key={leader.name} data-reveal className="group flex flex-col mx-2 mb-2 sm:mx-4 sm:mb-4 lg:mx-6 lg:mb-6">
               <div className="leader-card-shadow relative aspect-[4/5] overflow-hidden rounded-2xl border bg-[color:var(--color-mist)] dark:bg-[color:var(--color-graphite)]">
                 <Image
                   src={leader.avatarSrc}

@@ -4,6 +4,7 @@ import { useEffect, useId, useRef } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import SmokeCanvas from "@/components/visuals/SmokeCanvas";
 import { BTN_GLOW } from "@/lib/buttonStyles";
+import { scrollToSection } from "@/lib/scrollToSection";
 
 // Same traveling-wave technique as EkgDivider (Impact's "by the numbers"
 // dividers) — a rise-and-fall envelope combined with a phase that travels
@@ -54,6 +55,14 @@ function buildUnderlinePath(offsets: number[]) {
   return `M${coords.join(" L")}`;
 }
 
+// A mobile address-bar collapse/expand shifts innerHeight by roughly
+// 50-100px — comfortably under this. A real orientation change swaps
+// width/height entirely, a much larger jump, so this threshold tells the
+// two apart on the rare occasion a browser's first `resize` event during
+// rotation reports a still-transitional width that happens to match the
+// last recorded one (a real, if uncommon, mobile Safari quirk).
+const HEIGHT_DRIFT_THRESHOLD = 150;
+
 // Copy per project-guide-doc/aerin-bio-design-doc.md Section 6.1 — the doc's
 // own hero visual note ("no other visual asset needed — background carries
 // the visual weight") is superseded by this "Aerin"-as-a-window treatment,
@@ -68,6 +77,7 @@ export default function Hero() {
   const eyebrowRef = useRef<HTMLParagraphElement | null>(null);
   const afterRef = useRef<HTMLDivElement | null>(null);
   const bioRef = useRef<HTMLSpanElement | null>(null);
+  const bioTextRef = useRef<SVGTextElement | null>(null);
   const infoRef = useRef<HTMLDivElement | null>(null);
   const linePathRef = useRef<SVGPathElement | null>(null);
   const lineTweenRef = useRef<gsap.core.Tween | null>(null);
@@ -86,8 +96,21 @@ export default function Hero() {
     const eyebrow = eyebrowRef.current;
     const after = afterRef.current;
     const bio = bioRef.current;
+    const bioText = bioTextRef.current;
     const info = infoRef.current;
-    if (!section || !stage || !svg || !overlay || !maskText || !placeholder || !eyebrow || !after || !bio || !info)
+    if (
+      !section ||
+      !stage ||
+      !svg ||
+      !overlay ||
+      !maskText ||
+      !placeholder ||
+      !eyebrow ||
+      !after ||
+      !bio ||
+      !bioText ||
+      !info
+    )
       return;
 
     // "Aerin" itself is a hole in a solid mask overlay (rect fill=black
@@ -95,44 +118,52 @@ export default function Hero() {
     // text — that's what makes the reveal a true window: the underlying
     // photo (see .hero-media below) never moves or scales, only the hole's
     // own size grows, so there is nothing to keep aligned or crossfade.
-    // Position/size come from measuring `placeholder` — an invisible span
-    // laid out exactly where "Aerin" reads in the wordmark — so the hole
-    // starts in the same spot the word would occupy normally.
+    // "Bio" is drawn the same way — a second, plain (unmasked) SVG <text>,
+    // not real DOM text — rather than mixing an HTML span next to the SVG
+    // mask. HTML and SVG text run through different layout/rendering code
+    // paths in the browser (kerning, hinting, sub-pixel positioning), so
+    // even with every font property copied over identically, the two could
+    // never be *guaranteed* to land pixel-for-pixel together; putting both
+    // words in the same coordinate system removes that whole category of
+    // mismatch. `placeholder`/`bio` below are invisible HTML spans that
+    // still reserve each word's box in the h1's normal text flow — that's
+    // what both SVG texts are measured against — but nothing HTML-rendered
+    // is ever actually painted for either word.
     //
     // The baseline is the part that kept coming out wrong under font-metric
     // *estimation* (canvas measureText ascent, line-box ratios — all
-    // guesses). It doesn't need to be estimated at all: "Bio" has no
-    // descenders (B, i, o all sit on the baseline), so a Range selecting
-    // just its text node gives a tight bounding box whose bottom edge is,
-    // by definition, exactly on the baseline — not approximated, geometric
-    // fact for this specific word. That's what both spans share (same h1,
-    // same line, same font), so it's what "Aerin" needs to sit on too.
-    const layout = () => {
-      const rect = placeholder.getBoundingClientRect();
-      const style = getComputedStyle(placeholder);
-      const fontSize = parseFloat(style.fontSize);
+    // guesses). It doesn't need to be estimated at all: neither word has a
+    // descender (A/e/r/i/n, B/i/o all sit on the baseline), so a Range
+    // selecting a word's own text node gives a tight bounding box whose
+    // bottom edge is, by definition, exactly on the baseline — not
+    // approximated, geometric fact, measured independently per word rather
+    // than assuming they share one (they do, since they're on the same
+    // line, but each is still measured off its own text directly).
+    const measureWord = (el: HTMLElement, svgRect: DOMRect) => {
+      const wordRect = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
 
-      // viewBox matches the svg's OWN rendered box (via its bounding rect),
-      // not window.innerWidth/innerHeight — those aren't guaranteed to be
-      // identical to the svg's actual CSS pixel size (e.g. any scrollbar
-      // gutter, or the parent stage's box differing from the raw window
-      // dimensions for any reason), and any mismatch scales every
-      // coordinate drawn inside, throwing off the mask hole's position
-      // relative to what getBoundingClientRect() reports in real CSS
-      // pixels for placeholder/bio.
-      const svgRect = svg.getBoundingClientRect();
-      svg.setAttribute("viewBox", `0 0 ${svgRect.width} ${svgRect.height}`);
-      maskText.setAttribute("font-family", style.fontFamily);
-      maskText.setAttribute("font-weight", style.fontWeight);
-      maskText.setAttribute("font-size", String(fontSize));
-      maskText.setAttribute("letter-spacing", style.letterSpacing);
-
-      let baselineY = rect.top + rect.height;
-      const bioTextNode = bio.firstChild;
-      if (bioTextNode) {
+      // getBoundingClientRect() is viewport-relative — it only lines up
+      // with the SVG's own 0,0-origin viewBox while the SVG's top-left
+      // happens to coincide with the viewport's (true while Hero is
+      // actively pinned, or right after a fresh load at scrollY 0).
+      // layout() can now also run from a resize/orientation-change or
+      // visibilitychange rebuild while the page is scrolled anywhere else
+      // entirely (confirmed: scroll to the bottom, rotate the device —
+      // this used to bake in a wildly wrong, permanently-stuck y position,
+      // since nothing scroll-driven ever re-runs layout() to correct it
+      // afterward). Subtracting the SVG's own rect makes every coordinate
+      // relative to the SVG's box instead of the viewport, which stays
+      // correct regardless of current scroll position — placeholder/bio
+      // and the svg are both children of the same `stage`, so their
+      // offset from each other never changes with scroll, only their
+      // shared offset from the viewport does.
+      let y = wordRect.top + wordRect.height - svgRect.top;
+      const textNode = el.firstChild;
+      if (textNode) {
         const range = document.createRange();
-        range.selectNodeContents(bioTextNode);
-        baselineY = range.getBoundingClientRect().bottom;
+        range.selectNodeContents(textNode);
+        y = range.getBoundingClientRect().bottom - svgRect.top;
       }
 
       // Manual per-breakpoint correction — see --hero-baseline-offset in
@@ -140,13 +171,51 @@ export default function Hero() {
       // geometrically correct in principle, but real devices/browsers
       // introduce enough sub-pixel and viewport-metric variance that a
       // small tunable nudge per breakpoint is the practical fix; adjust
-      // the token per breakpoint there, not this line.
+      // the token per breakpoint there, not this line. Applied to both
+      // words identically, so nudging it keeps them on one shared line
+      // rather than only moving "Aerin".
       const offset = parseFloat(getComputedStyle(section).getPropertyValue("--hero-baseline-offset")) || 0;
-      baselineY += offset;
+      y += offset;
 
-      maskText.setAttribute("x", String(rect.left + rect.width / 2));
-      maskText.setAttribute("y", String(baselineY));
-      return fontSize;
+      return {
+        x: wordRect.left + wordRect.width / 2 - svgRect.left,
+        y,
+        fontSize: parseFloat(style.fontSize),
+        fontFamily: style.fontFamily,
+        fontWeight: style.fontWeight,
+        letterSpacing: style.letterSpacing,
+      };
+    };
+
+    const layout = () => {
+      // viewBox matches the svg's OWN rendered box (via its bounding rect),
+      // not window.innerWidth/innerHeight — those aren't guaranteed to be
+      // identical to the svg's actual CSS pixel size (e.g. any scrollbar
+      // gutter, or the parent stage's box differing from the raw window
+      // dimensions for any reason), and any mismatch scales every
+      // coordinate drawn inside, throwing off both words' position
+      // relative to what getBoundingClientRect() reports in real CSS
+      // pixels for placeholder/bio.
+      const svgRect = svg.getBoundingClientRect();
+      svg.setAttribute("viewBox", `0 0 ${svgRect.width} ${svgRect.height}`);
+
+      const aerin = measureWord(placeholder, svgRect);
+      maskText.setAttribute("font-family", aerin.fontFamily);
+      maskText.setAttribute("font-weight", aerin.fontWeight);
+      maskText.setAttribute("font-size", String(aerin.fontSize));
+      maskText.setAttribute("letter-spacing", aerin.letterSpacing);
+      maskText.setAttribute("x", String(aerin.x));
+      maskText.setAttribute("y", String(aerin.y));
+
+      const bioMetrics = measureWord(bio, svgRect);
+      bioText.setAttribute("font-family", bioMetrics.fontFamily);
+      bioText.setAttribute("font-weight", bioMetrics.fontWeight);
+      bioText.setAttribute("font-size", String(bioMetrics.fontSize));
+      bioText.setAttribute("letter-spacing", bioMetrics.letterSpacing);
+      bioText.setAttribute("x", String(bioMetrics.x));
+      bioText.setAttribute("y", String(bioMetrics.y));
+
+      return aerin.fontSize;
     };
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -157,22 +226,43 @@ export default function Hero() {
       layout();
       gsap.set(overlay, { opacity: 1 });
       gsap.set(info, { opacity: 1, y: 0, filter: "blur(0px)", position: "static" });
-      // Width-only guard — see the matching comment below on the pinned
-      // path's onResize for why.
+      // Width-or-big-height-change guard — see the matching comment below
+      // on the pinned path's onResize for why the height threshold exists
+      // alongside the width check.
       let lastWidth = window.innerWidth;
+      let lastHeight = window.innerHeight;
+      const layoutDrifted = () =>
+        window.innerWidth !== lastWidth || Math.abs(window.innerHeight - lastHeight) > HEIGHT_DRIFT_THRESHOLD;
       const onResize = () => {
-        if (window.innerWidth === lastWidth) return;
+        if (!layoutDrifted()) return;
         lastWidth = window.innerWidth;
+        lastHeight = window.innerHeight;
+        layout();
+      };
+      // Returning to a long-backgrounded tab doesn't fire `resize`, but
+      // GSAP's own ScrollTrigger auto-refreshes on `visibilitychange`
+      // regardless — see the matching comment below.
+      const onVisibilityChange = () => {
+        if (document.visibilityState !== "visible" || !layoutDrifted()) return;
+        lastWidth = window.innerWidth;
+        lastHeight = window.innerHeight;
         layout();
       };
       window.addEventListener("resize", onResize);
-      return () => window.removeEventListener("resize", onResize);
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      return () => {
+        window.removeEventListener("resize", onResize);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      };
     }
 
     let trigger: ScrollTrigger | undefined;
     let resizeTimer: ReturnType<typeof setTimeout>;
     let lastWidth = window.innerWidth;
+    let lastHeight = window.innerHeight;
     let cancelled = false;
+    const layoutDrifted = () =>
+      window.innerWidth !== lastWidth || Math.abs(window.innerHeight - lastHeight) > HEIGHT_DRIFT_THRESHOLD;
 
     const ctx = gsap.context(() => {
       gsap.set(info, { opacity: 0, y: 24, filter: "blur(8px)" });
@@ -196,8 +286,10 @@ export default function Hero() {
         // Eyebrow + subhead/CTAs/hint clear out first.
         tl.to([eyebrow, after], { opacity: 0, y: -32, filter: "blur(6px)", duration: 0.6, ease: "power2.in" }, 0)
           // "Bio" fades away, leaving "Aerin" — the hole — to carry the rest
-          // of the sequence on its own.
-          .to(bio, { opacity: 0, duration: 0.5 }, 0.4)
+          // of the sequence on its own. Targets the SVG text (bioText), not
+          // the invisible HTML placeholder (bio) — the placeholder only
+          // exists to reserve layout space for measurement.
+          .to(bioText, { opacity: 0, duration: 0.5 }, 0.4)
           // The hole itself grows — not a transform, an actual font-size
           // increase on the mask's <text>, so the photo it reveals is
           // always shown at its real, unscaled size underneath. This alone
@@ -258,25 +350,53 @@ export default function Hero() {
       // Same debounced full-rebuild pattern as PeopleOrbit — the mask's
       // hole position/size are measured in real pixels, so a viewport
       // resize needs a fresh measurement and a fresh timeline, not just a
-      // ScrollTrigger.refresh(). Width-only guard: mobile browsers fire a
-      // `resize` event when the address bar collapses/expands during
-      // scroll, changing only innerHeight. This section is pinned for a
-      // 3-viewport-height scroll distance, so that spurious resize was
-      // firing mid-scroll, killing and rebuilding the timeline (and its
-      // scroll-linked mask font-size tween) mid-transition — leaving
-      // "Aerin" stuck at whatever intermediate size the old timeline had
-      // reached instead of either its resting or fully-grown size. Layout
-      // here is otherwise entirely width-responsive, so skipping
-      // height-only changes is safe.
+      // ScrollTrigger.refresh(). Width-or-big-height-change guard: mobile
+      // browsers fire a `resize` event when the address bar
+      // collapses/expands during scroll, changing only innerHeight by
+      // ~50-100px. This section is pinned for a 3-viewport-height scroll
+      // distance, so that spurious resize was firing mid-scroll, killing
+      // and rebuilding the timeline (and its scroll-linked mask font-size
+      // tween) mid-transition — leaving "Aerin" stuck at whatever
+      // intermediate size the old timeline had reached. A real orientation
+      // change swaps width/height entirely (a much bigger jump than the
+      // address-bar case), so HEIGHT_DRIFT_THRESHOLD tells the two apart —
+      // width alone usually catches orientation changes too, but some
+      // mobile browsers report a still-transitional width on the first
+      // resize event of a rotation, which a width-only check can miss.
       const onResize = () => {
-        if (window.innerWidth === lastWidth) return;
+        if (!layoutDrifted()) return;
         lastWidth = window.innerWidth;
+        lastHeight = window.innerHeight;
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(build, 200);
       };
       window.addEventListener("resize", onResize);
 
-      return () => window.removeEventListener("resize", onResize);
+      // Returning to a long-backgrounded tab doesn't fire `resize` at all,
+      // but ScrollTrigger's own default autoRefreshEvents list includes
+      // `visibilitychange` — it recalculates pin/scroll geometry and
+      // re-renders the scrub timeline's current frame on its own the
+      // moment the tab becomes visible again, independently of this
+      // component. That updates GSAP's bookkeeping but not this file's own
+      // hand-drawn mask coordinates, since only `build()` (via `layout()`)
+      // knows how to redraw those — leaving the two out of sync, which is
+      // what read as "Aerin disappears" after leaving the tab a while.
+      // Gated the same way as resize, so short backgrounding (switching
+      // apps briefly, screen lock) with no actual layout change doesn't
+      // pay for a rebuild every time.
+      const onVisibilityChange = () => {
+        if (document.visibilityState !== "visible" || !layoutDrifted()) return;
+        lastWidth = window.innerWidth;
+        lastHeight = window.innerHeight;
+        build();
+        ScrollTrigger.refresh();
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      return () => {
+        window.removeEventListener("resize", onResize);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      };
     }, section);
 
     return () => {
@@ -380,6 +500,13 @@ export default function Hero() {
             fill="var(--background)"
             mask={`url(#${maskId})`}
           />
+          {/* "Bio" — plain (unmasked) SVG text, not the mask geometry above;
+              paints normally like any other shape in this svg. Same
+              --foreground color the h1 used to render it in directly, since
+              it's no longer real DOM text carrying its own inherited color. */}
+          <text ref={bioTextRef} fill="var(--foreground)" textAnchor="middle" dominantBaseline="alphabetic">
+            Bio
+          </text>
         </svg>
 
         {/* The site-wide smoke (SmokeBackground, in layout.tsx) sits behind
@@ -458,11 +585,11 @@ export default function Hero() {
             </div>
 
             {/* Fluid clamp() font-size, not fixed text-6xl/7xl/8xl
-                breakpoints — "Aerin" and "Bio" MUST stay on one line for
-                the mask-hole positioning logic above (it measures "Bio"'s
-                baseline to place "Aerin"'s hole), and a fixed 60px was
-                wide enough to wrap onto two lines on narrow phones,
-                breaking that measurement entirely. clamp() scales
+                breakpoints — "Aerin" and "Bio" MUST stay on one line
+                (whitespace-nowrap below is the hard guarantee; both words'
+                own SVG text is independently measured, but they're still
+                meant to read as one wordmark), and a fixed 60px was wide
+                enough to wrap onto two lines on narrow phones. clamp() scales
                 continuously with viewport width instead of jumping
                 between fixed sizes that can land on an in-between width
                 still too narrow to fit — 11vw keeps "Aerin Bio" comfortably
@@ -470,15 +597,27 @@ export default function Hero() {
                 (2.25rem floor for the smallest phones, 6rem ceiling
                 matching the original lg:text-8xl). whitespace-nowrap is
                 a hard backstop against wrapping regardless. */}
-            <h1 className="relative whitespace-nowrap text-[clamp(2.25rem,11vw,6rem)] font-semibold tracking-tight">
-              {/* Invisible — reserves the exact box the SVG mask's hole is
-                  measured against and positioned over, so "Aerin" lines up
-                  with "Bio" the way normal inline text would, but the actual
-                  visible word is drawn entirely by the mask above. */}
+            {/* aria-label carries the accessible heading text — both spans
+                below are visibility:hidden purely to reserve layout boxes
+                for measurement, and hidden elements are excluded from the
+                accessibility tree, so without this the heading would
+                announce as empty. */}
+            <h1
+              aria-label="Aerin Bio"
+              className="relative whitespace-nowrap text-[clamp(2.25rem,11vw,6rem)] font-semibold tracking-tight"
+            >
+              {/* Invisible — reserves the exact box each word's SVG text
+                  (the mask hole for "Aerin", a plain <text> for "Bio") is
+                  measured against and positioned over, so the two line up
+                  the way normal inline text would, but neither word is
+                  actually painted here — both are drawn entirely in the SVG
+                  above. */}
               <span ref={placeholderRef} className="invisible">
                 Aerin
               </span>{" "}
-              <span ref={bioRef}>Bio</span>
+              <span ref={bioRef} className="invisible">
+                Bio
+              </span>
             </h1>
           </div>
 
@@ -491,12 +630,20 @@ export default function Hero() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="#innovation"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToSection("innovation");
+                }}
                 className={`${BTN_GLOW} px-6 py-3`}
               >
                 See the platform
               </a>
               <a
                 href="#cta"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToSection("cta");
+                }}
                 onMouseEnter={runUnderlineWave}
                 onFocus={runUnderlineWave}
                 className="link-shine relative text-sm font-medium"

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/chrome/ThemeToggle";
 import { BTN_GLOW } from "@/lib/buttonStyles";
+import { scrollToSection } from "@/lib/scrollToSection";
 
 const NAV_LINKS = [
   { href: "#innovation", label: "Innovation" },
@@ -58,12 +59,24 @@ export default function Header() {
 
           <nav className="hidden items-center gap-8 md:flex">
             {NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="link-shine text-sm">
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToSection(link.href.slice(1));
+                }}
+                className="link-shine text-sm"
+              >
                 {link.label}
               </Link>
             ))}
             <Link
               href="#cta"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("cta");
+              }}
               className={`${BTN_GLOW} px-4 py-2`}
             >
               Request a technical brief
@@ -141,7 +154,11 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMenuOpen(false);
+                  scrollToSection(link.href.slice(1));
+                }}
                 tabIndex={menuOpen ? 0 : -1}
                 className="link-shine py-2 text-sm"
               >
@@ -150,7 +167,11 @@ export default function Header() {
             ))}
             <Link
               href="#cta"
-              onClick={() => setMenuOpen(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                setMenuOpen(false);
+                scrollToSection("cta");
+              }}
               tabIndex={menuOpen ? 0 : -1}
               className={`${BTN_GLOW} mt-2 px-4 py-2 mb-4 text-center`}
             >
