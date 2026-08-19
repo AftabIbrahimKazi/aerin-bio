@@ -1,0 +1,71 @@
+/* Blog carousel — Swiper's own base CSS sets `.swiper { overflow: hidden;
+   padding: 0; }`, a single-class rule that ties in specificity with a
+   same-element Tailwind utility (also single-class), so source order
+   decides the winner rather than the class actually written last. Scoping
+   through the wrapper class here (two classes) wins deterministically
+   without `!important` — see RULE 14, no-!important, in the CSS standard.
+   Split into overflow-x/overflow-y rather than the shorthand `visible` —
+   `loop: true` makes Swiper position off-screen duplicate slides for its
+   seamless-loop illusion, and a flat `overflow: visible` was un-clipping
+   those too, inflating document.scrollWidth into real page-wide horizontal
+   scroll (confirmed by measurement: 1348px vs a 375px viewport). Only
+   overflow-y ever needed to be visible — it's what lets each card's hover
+   lift/shadow bleed past the carousel's own box; nothing here is meant to
+   bleed horizontally. */
+.blog-swiper .swiper {
+  overflow-x: hidden;
+  overflow-y: visible;
+  padding-bottom: 2rem;
+}
+
+/* Swiper also sets `.swiper-slide { height: 100%; }` (same single-class
+   tie). Overriding to `auto` here — rather than via the `autoHeight` prop —
+   keeps the wrapper's default `align-items: stretch`, so every card in a
+   row still matches the tallest one; Swiper's own autoheight CSS sets
+   `align-items: flex-start` instead, which drops each card to its own
+   natural (uneven) height. */
+.blog-swiper .swiper-slide {
+  height: auto;
+}
+
+/* Same culture-green re-theme as the testimonials carousel. Prev/next
+   controls are custom buttons rendered below the carousel (Blog.tsx),
+   not Swiper's built-in nav, so they can never overlap a card — only
+   the pagination dots need re-theming here. */
+.blog-swiper .swiper-pagination-bullet {
+  background: var(--foreground);
+  opacity: 0.25;
+}
+
+.blog-swiper .swiper-pagination-bullet-active {
+  background: var(--color-culture);
+  opacity: 1;
+}
+
+/* Same overflow/padding override as .blog-swiper above, same reason —
+   including the overflow-x/overflow-y split. Testimonials.tsx drops the
+   section's own horizontal padding instead of widening the clip box here,
+   so the rotated cards' crop line lands flush at the viewport edge (reads
+   as full-bleed) rather than inside a visible gutter (reads as cropped). */
+.testimonials-swiper .swiper {
+  overflow-x: hidden;
+  overflow-y: visible;
+  padding-top: 1.5rem;
+  padding-bottom: 4rem;
+}
+
+/* Same height override as .blog-swiper above, same reason. */
+.testimonials-swiper .swiper-slide {
+  height: auto;
+}
+
+/* Same culture-green pagination re-theme for the testimonials carousel. */
+.testimonials-swiper .swiper-pagination-bullet {
+  background: var(--foreground);
+  opacity: 0.25;
+}
+
+.testimonials-swiper .swiper-pagination-bullet-active {
+  background: var(--color-culture);
+  opacity: 1;
+}

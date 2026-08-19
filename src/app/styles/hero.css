@@ -1,0 +1,78 @@
+/* Hero media — shared by both the "Aerin" text-mask cutout and the
+   full-bleed reveal layer behind it, so the two show the identical image at
+   the identical position and there's no visible seam once the reveal
+   layer's opacity catches up with the growing text mask. The gradient is a
+   fixed vignette (not theme-reactive — the photo underneath isn't either),
+   there purely so the info-typography beat stays legible over whatever
+   part of the photo it lands on. */
+.hero-media {
+  background-image: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-ink) 20%, transparent),
+      transparent 35%,
+      color-mix(in srgb, var(--color-ink) 35%, transparent)
+    ),
+    url("/hero-section.avif");
+  background-size: cover;
+  background-position: center;
+}
+
+/* Manual per-breakpoint correction for the "Aerin" mask hole's baseline
+   (read via getComputedStyle in Hero.tsx's layout() and subtracted from
+   the measured baseline). The dynamic Range-based measurement is correct
+   in principle, but real devices/browsers introduce enough sub-pixel and
+   viewport-metric variance that a small manual nudge per breakpoint is the
+   practical fix — tune each value by eye against that breakpoint's actual
+   rendering, then leave it. 0px is the geometrically "correct" baseline
+   with no correction; positive values shift the hole down, negative up. */
+#hero {
+  --hero-baseline-offset: 0px;
+}
+
+/* ================================
+   BOTTOM HALF — Media Queries
+   ================================ */
+
+/* Extra Small — Portrait phones */
+@media (max-width: 575.98px) {
+  #hero {
+    /* Verified against a 375px-wide render — re-check against your own
+       target devices and adjust if needed. */
+    --hero-baseline-offset: -78px;
+  }
+}
+
+/* Small — Landscape phones */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  #hero {
+    --hero-baseline-offset: -85px;
+  }
+}
+
+/* Medium — Tablets */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  #hero {
+    --hero-baseline-offset: -90px;
+  }
+}
+
+/* Large — Desktops */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  #hero {
+    --hero-baseline-offset: -90px;
+  }
+}
+
+/* Extra Large — Large desktops */
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+  #hero {
+    --hero-baseline-offset: -90px;
+  }
+}
+
+/* XX-Large — Larger desktops */
+@media (min-width: 1400px) {
+  #hero {
+    --hero-baseline-offset: -90px;
+  }
+}

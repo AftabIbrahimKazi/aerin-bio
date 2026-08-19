@@ -1,0 +1,9 @@
+/* Leadership card drop shadow + border — see --shadow-leader-card and
+   --border-leader-card in tokens.css for why these are tokens rather than
+   Tailwind's dark: utility. Same 0.3s transition duration used sitewide
+   for theme-switch cross-fades. */
+.leader-card-shadow {
+  box-shadow: var(--shadow-leader-card);
+  border-color: var(--border-leader-card);
+  transition: box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+}

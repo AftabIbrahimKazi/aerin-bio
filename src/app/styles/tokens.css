@@ -1,0 +1,114 @@
+:root {
+  /* Aerin Bio palette — see project-guide-doc/aerin-bio-design-doc.md Section 5 */
+  --color-ink: #0d1210;
+  --color-graphite: #1c2321;
+  --color-paper: #f6f7f4;
+  --color-mist: #e7eae4;
+  --color-culture: #35d0a2;
+  --color-culture-dim: #1f8f6d;
+  --color-signal: #ff5a3c;
+
+
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --background-1: var(--color-ink);
+  --foreground-1: var(--color-paper);
+  /* Leadership card drop shadow. Deliberately a CSS variable, not Tailwind's
+     dark: utility — this project never registered a @variant dark tied to
+     [data-theme], so dark: only ever follows prefers-color-scheme and
+     silently ignores the manual ThemeToggle override. Token-based shadows
+     pick up both, the same way --background/--foreground already do. */
+  --shadow-leader-card: 0 20px 30px -8px rgb(13 18 16 / 0.18);
+  /* Same reasoning as --shadow-leader-card above: var(--foreground)/10 is
+     technically theme-reactive already, but ink-at-10% and paper-at-10% are
+     both just "barely there" — deliberately different values per theme
+     instead of one flat opacity riding along on the foreground token.
+     Light mode is solid white by request, not an ink tint. */
+  --border-leader-card: var(--color-paper);
+
+  /* Fold-corner button underside (.btn-fold in effects.css) — a flat hex
+     equivalent of bg-[--background-1]/90 composited over the page's own
+     --background, precomputed rather than expressed as an alpha/opacity
+     value per request. Recompute if --color-ink/--color-paper/--background-1
+     ever change: 90% background-1 + 10% background, per channel. */
+  --color-fold-underside: #242927;
+
+  /* PeopleOrbit's PersonAvatar fallback (initials circle, used for
+     Partners — they have no photo). Same reasoning as
+     --shadow-leader-card above: this used Tailwind's dark: variant, which
+     silently ignores the manual ThemeToggle override. */
+  --avatar-bg: color-mix(in srgb, var(--color-mist) 90%, transparent);
+  --avatar-border: rgb(13 18 16 / 0.2);
+  --avatar-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+
+  /* Smoke background particle colors, read at runtime by SmokeBackground.tsx
+     via getComputedStyle. Deliberately NOT theme-reactive — the mint/
+     culture-green "lighter" blend is the one that reads correctly; the
+     multiply-blend graphite variant tried for light mode looked
+     greenish-black, so the smoke keeps this palette in both themes. */
+  --smoke-core-rgb: 190 238 224;
+  --smoke-mid-rgb: 53 208 162;
+  --smoke-blend: lighter;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-fragment-mono);
+}
+
+/* Manual theme toggle override — set by ThemeToggle.tsx via [data-theme]
+   on <html>. Higher specificity than the bare :root above, so it wins
+   regardless of prefers-color-scheme once the visitor picks explicitly. */
+:root[data-theme="light"] {
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --background-1: var(--color-ink);
+  --foreground-1: var(--color-paper);
+  --shadow-leader-card: 0 20px 30px -8px rgb(13 18 16 / 0.18);
+  --border-leader-card: var(--color-paper);
+  --color-fold-underside: #242927;
+  --avatar-bg: color-mix(in srgb, var(--color-mist) 90%, transparent);
+  --avatar-border: rgb(13 18 16 / 0.2);
+  --avatar-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+}
+
+:root[data-theme="dark"] {
+  --background: var(--color-ink);
+  --foreground: var(--color-paper);
+  --background-1: var(--color-paper);
+  --foreground-1: var(--color-ink);
+  --shadow-leader-card: 0 24px 34px -8px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(53 208 162 / 0.06);
+  --border-leader-card: rgb(246 247 244 / 0.18);
+  --color-fold-underside: #dfe0dd;
+  --avatar-bg: var(--color-graphite);
+  --avatar-border: rgb(246 247 244 / 0.25);
+  --avatar-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+}
+
+/* ================================
+   BOTTOM HALF — Media Queries
+   ================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--color-ink);
+    --foreground: var(--color-paper);
+    --background-1: var(--color-paper);
+    --foreground-1: var(--color-ink);
+    /* Same shadow, stronger — a black shadow this soft is invisible against
+       a dark page unless its own opacity/spread compensates, plus a faint
+       culture-green rim so the card still reads as lifted, not just darker. */
+    --shadow-leader-card: 0 24px 34px -8px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(53 208 162 / 0.06);
+    /* Brighter and more opaque than the light-mode value — a pale border
+       needs more presence to read against the dark graphite card fill. */
+    --border-leader-card: rgb(246 247 244 / 0.18);
+    /* background-1/background swap roles in dark mode, so the composite
+       flips too: 90% paper + 10% ink. */
+    --color-fold-underside: #dfe0dd;
+    --avatar-bg: var(--color-graphite);
+    --avatar-border: rgb(246 247 244 / 0.25);
+    --avatar-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+  }
+}

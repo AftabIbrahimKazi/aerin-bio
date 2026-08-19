@@ -1,0 +1,189 @@
+/* Shine text links — from https://uiverse.io/neerajbaniwal, ported off the
+   original's hardcoded greys/white onto --foreground/--color-culture so it
+   tracks the theme toggle, and off a fixed 180px sweep (tuned to that
+   demo's one string) onto percentage-based background-position/-size so it
+   scales to any link's text width. Same overall shape as the original
+   keyframes though: sweep, hold, snap back on loop — not a seamless tile.
+   The gradient/clip is always active, not just added on hover — toggling
+   -webkit-background-clip/color on and off at the hover boundary was the
+   flicker: an abrupt render-mode swap, on top of the animation restarting
+   from its 0% keyframe every time. Since background-position 0% shows only
+   this gradient's first (pure --foreground) segment, "always on but parked
+   at 0%" is visually identical to plain text at rest — hover only adds the
+   animation, and the transition below smooths the snap-back on mouse-leave
+   (when the animation is removed and the property reverts to its declared
+   0% value) instead of jump-cutting. */
+.link-shine {
+  background-image: linear-gradient(
+    to right,
+    var(--foreground) 0%,
+    var(--foreground) 40%,
+    var(--color-culture) 50%,
+    var(--foreground) 60%,
+    var(--foreground) 100%
+  );
+  background-size: 250% auto;
+  background-position: 0% center;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  transition: background-position 0.35s ease-out;
+}
+
+.link-shine:hover,
+.link-shine:focus-visible {
+  animation: link-shine 1.2s linear infinite;
+}
+
+@keyframes link-shine {
+  0% {
+    background-position: 0% center;
+  }
+  60% {
+    background-position: 100% center;
+  }
+  100% {
+    background-position: 100% center;
+  }
+}
+
+/* Primary-button glow — combines two Uiverse references, both retoned from
+   their original palettes onto --color-culture/--color-culture-dim:
+     - https://uiverse.io/Spacious74 — a blurred gradient halo that grows in
+       on hover, tightens on active. Needs a real pseudo-element (Tailwind
+       can't target ::before), so it lives here rather than as a utility.
+     - https://uiverse.io/Allyhere — a sliding gradient sheen across the
+       button's own fill on hover, plus a focus-visible ring for a11y.
+   `z-index: 0` on the button establishes a local stacking context so the
+   halo's `z-index: -1` sits behind only this button, not arbitrary
+   sibling content elsewhere in the page's stacking order. */
+.btn-glow {
+  position: relative;
+  z-index: 0;
+  background-image: linear-gradient(
+    325deg,
+    var(--color-culture-dim) 0%,
+    var(--color-culture) 55%,
+    var(--color-culture-dim) 90%
+  );
+  background-size: 280% auto;
+  transition: background-position 0.6s ease, box-shadow 0.3s ease, transform 0.3s ease,
+    letter-spacing 0.3s ease;
+}
+
+.btn-glow::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(325deg, var(--color-culture-dim), var(--color-culture));
+  opacity: 0;
+  filter: blur(0);
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
+.btn-glow:hover {
+  background-position: right top;
+  transform: scale(1.04);
+  letter-spacing: 0.02em;
+}
+
+.btn-glow:hover::before {
+  opacity: 0.45;
+  filter: blur(0.4em);
+}
+
+.btn-glow:active::before {
+  opacity: 0.55;
+  filter: blur(0.15em);
+}
+
+.btn-glow:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--background), 0 0 0 6px var(--color-culture);
+}
+
+/* Fold-corner buttons — https://uiverse.io/ferlagher, retoned off the
+   original's hardcoded maroon/grey onto --foreground-1 (the pill's own
+   fill) for the resting shadow and --color-fold-underside/--color-culture
+   for the peeling corner, so it reads correctly against either of CTA's
+   inverted panels in both themes. Needs a real ::before pseudo-element
+   (Tailwind can't target it), so it lives here like .btn-glow above. The
+   two-tone split (underside, then the green edge) is what makes it read as
+   a folded-paper corner rather than a plain triangle badge. The underside
+   uses --color-fold-underside — a precomputed flat hex token (defined in
+   tokens.css, next to --shadow-leader-card) equal to the CTA section's own
+   rendered bg-[--background-1]/90, by request expressed as a solid color
+   rather than an alpha/opacity value. The resting shadow deliberately
+   stays ink-toned in both themes rather than following
+   --background-1/--foreground-1 — a drop shadow is conventionally always
+   dark, and background-1 flips to paper in dark mode which would render as
+   a pale halo instead of a shadow. Same non-theme-reactive exception as
+   .hero-media's vignette in hero.css. */
+.btn-fold {
+  outline: none;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.3s ease-out, transform 0.15s ease-out;
+  z-index: 0;
+}
+
+.btn-fold:hover {
+  box-shadow: 0.4em 0.4em 0.6em color-mix(in srgb, var(--color-ink) 30%, transparent);
+}
+
+.btn-fold:active {
+  box-shadow: 0.2em 0.2em 0.3em color-mix(in srgb, var(--color-ink) 30%, transparent);
+  transform: translate(0.08em, 0.08em);
+}
+
+.btn-fold::before {
+  background: linear-gradient(
+    135deg,
+    var(--color-fold-underside) 0%,
+    var(--color-fold-underside) 50%,
+    var(--color-culture-dim) 50%,
+    var(--color-culture) 65%
+  );
+  border-radius: 0 0 0.85em 0;
+  content: "";
+  height: 0;
+  left: 0;
+  position: absolute;
+  top: 0;
+  transition: height 0.3s ease, width 0.3s ease;
+  width: 0;
+}
+
+.btn-fold:hover::before {
+  height: 1.7em;
+  width: 1.7em;
+}
+
+.btn-fold:focus-visible {
+  box-shadow: 0 0 0 3px var(--background-1), 0 0 0 6px var(--color-culture);
+  outline: none;
+}
+
+/* ================================
+   BOTTOM HALF — Media Queries
+   ================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .link-shine:hover,
+  .link-shine:focus-visible {
+    animation: none;
+  }
+
+  .btn-glow,
+  .btn-glow::before {
+    transition: none;
+  }
+
+  .btn-fold,
+  .btn-fold::before {
+    transition: none;
+  }
+}

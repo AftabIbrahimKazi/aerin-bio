@@ -1,26 +1,15 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* Split into one file per concern (tokens, base resets, per-component
+   effects) rather than one flat stylesheet — import order is preserved
+   exactly as the rules used to appear here, so cascade/specificity is
+   unchanged. See coding-standards/index.md's File-to-Role Mapping for the
+   role each file plays. */
+@import "./styles/tokens.css";
+@import "./styles/base.css";
+@import "./styles/theme-toggle.css";
+@import "./styles/effects.css";
+@import "./styles/hero.css";
+@import "./styles/leadership.css";
+@import "./styles/dividers.css";
+@import "./styles/swiper.css";

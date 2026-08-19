@@ -1,0 +1,18 @@
+/* Connective seam between Innovation/Technology/Capabilities — a short
+   vertical thread continuing the trunk-line motif from
+   DeliveryPathwayDiagram, so the three sections read as one continuous
+   mechanism rather than stacked boxes. */
+.section-seam {
+  width: 1px;
+  height: 3rem;
+  margin-inline: auto;
+  background: linear-gradient(to bottom, transparent, var(--color-culture-dim), transparent);
+}
+
+/* EKG dividers — Impact section "by the numbers" grid lines. The path
+   geometry and stroke opacity/glow are driven by GSAP (EkgDivider.tsx),
+   not CSS keyframes — a one-shot sine wave settling back to flat, not a
+   looping animation, so this class just sizes the hit zone. */
+.ekg-divider {
+  cursor: default;
+}

@@ -1,0 +1,68 @@
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Smooth cross-fade for theme switches (system change or manual toggle).
+   Scoped to chrome elements that read --background/--foreground rather
+   than a blanket `*` selector, so it doesn't fight component-level
+   transitions (hover states, the scroll-to-top fade, etc).
+   This is plain (unlayered) CSS, which in Tailwind v4's cascade-layers
+   setup always outranks layered utility classes regardless of specificity
+   — so it was silently resetting `header`'s Tailwind `transition-transform`
+   utility, dropping `translate` from the list entirely and making the
+   scroll-hide/show snap instead of animate. `translate` is included here
+   for exactly that reason. */
+body,
+header,
+footer,
+button,
+a,
+svg {
+  transition: background-color 0.3s ease-out, color 0.3s ease-out, border-color 0.3s ease-out,
+    fill 0.3s ease-out, stroke 0.3s ease-out, translate 0.3s ease-out;
+}
+
+/* Native scrollbar theming — reads --background/--foreground/--color-culture
+   so the scrollbar tracks light/dark theme changes instead of staying the
+   browser's OS-grey default against a themed page. */
+html {
+  scrollbar-color: var(--color-culture-dim) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-culture-dim);
+  border: 2px solid var(--background);
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-culture);
+}
+
+/* ================================
+   BOTTOM HALF — Media Queries
+   ================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  header,
+  footer,
+  button,
+  a,
+  svg {
+    transition: none;
+  }
+}
