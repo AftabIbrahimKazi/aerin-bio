@@ -4,8 +4,8 @@
 
 A premium, animation-driven landing page for a fictional biotechnology company, built for the Creative Frontend Developer take-home assignment. Aerin Bio engineers antibodies, peptides, and gene therapies as inhaled biologics — delivered as a fine respirable mist straight to lung tissue instead of through the entire bloodstream.
 
-**Live site:** _add deployed URL here_
-**Repository:** _add repository URL here_
+**Live site:** [aerin-bio.vercel.app](https://aerin-bio.vercel.app)
+**Repository:** [github.com/AftabIbrahimKazi/aerin-bio](https://github.com/AftabIbrahimKazi/aerin-bio)
 
 ---
 

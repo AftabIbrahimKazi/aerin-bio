@@ -16,13 +16,6 @@ if (typeof window !== "undefined") {
   // mid-transition on mobile. This is GSAP's own documented fix: ignore
   // resize on touch-only devices unless the width actually changes.
   ScrollTrigger.config({ ignoreMobileResize: true });
-  // ignoreMobileResize alone didn't fully stop pinned sequences (Hero's
-  // mask reveal) from jumping when the address bar collapses/expands —
-  // GSAP's more targeted tool for this: normalizeScroll takes over scroll
-  // rendering with a transform-based approach that isn't tied to the
-  // browser's native (address-bar-jittery) scroll position, which is what
-  // pinned/scrubbed animations need on touch devices.
-  ScrollTrigger.normalizeScroll(true);
 }
 
 export { gsap, ScrollTrigger };

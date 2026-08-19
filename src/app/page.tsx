@@ -1,11 +1,21 @@
 import dynamic from "next/dynamic";
 import Hero from "@/components/sections/Hero";
+import TeamAndPartners from "@/components/sections/TeamAndPartners";
 
 // Hero stays a static import — it's the LCP element, so it must ship in the
-// initial bundle. Everything below it is off-screen at load on every
-// viewport this design targets, so each section is its own chunk instead of
-// bloating the bundle every visitor downloads before they've scrolled.
-const TeamAndPartners = dynamic(() => import("@/components/sections/TeamAndPartners"));
+// initial bundle. TeamAndPartners is also static, despite being off-screen
+// at load: its PeopleOrbit pin (ScrollTrigger, `pin: stage`) measures the
+// page layout on mount to compute its own trigger start position, and
+// Hero's own pin inserts a large spacer that shifts everything below it —
+// as a next/dynamic chunk, TeamAndPartners was mounting (and measuring) on
+// a separate, later tick than Hero, sometimes before Hero's spacer existed,
+// so its pin activated hundreds of pixels too early and visually
+// overlapped Hero's still-active pin sequence. Keeping the two sections
+// immediately after each other synchronously mounted avoids that race.
+// Everything further down is off-screen at load on every viewport this
+// design targets and isn't itself pinned, so each of those stays its own
+// chunk instead of bloating the bundle every visitor downloads before
+// they've scrolled.
 const Innovation = dynamic(() => import("@/components/sections/Innovation"));
 const Production = dynamic(() => import("@/components/sections/Production"));
 const Technology = dynamic(() => import("@/components/sections/Technology"));

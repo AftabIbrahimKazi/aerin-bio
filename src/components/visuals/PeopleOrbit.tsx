@@ -264,6 +264,7 @@ export default function PeopleOrbit({ id, centerLabel, team, partners, teamCopy,
 
     let trigger: ScrollTrigger | undefined;
     let resizeTimer: ReturnType<typeof setTimeout>;
+    let lastWidth = window.innerWidth;
 
     const build = () => {
       trigger?.kill();
@@ -354,11 +355,34 @@ export default function PeopleOrbit({ id, centerLabel, team, partners, teamCopy,
 
     build();
 
+    // Hero (mounted just above this section) also creates a pinned
+    // ScrollTrigger in its own effect in the same render pass. GSAP can
+    // batch multiple ScrollTrigger.create() calls created together and
+    // measure them against a layout snapshot taken before any of that
+    // batch's own pin-spacers have actually been inserted — so this
+    // section's "top top" start was resolving against the page's height
+    // as if Hero had no pin-spacer yet, landing hundreds of pixels too
+    // early (confirmed via ScrollTrigger.getAll()). A plain
+    // ScrollTrigger.refresh() doesn't recompute an already-pinned
+    // trigger's start correctly, so this does a full kill-and-rebuild
+    // one frame later, once the initial batch has settled and Hero's
+    // spacer is actually in the DOM.
+    const initialRebuildFrame = requestAnimationFrame(() => {
+      build();
+      ScrollTrigger.refresh();
+    });
+
     // Window resize only — not a ResizeObserver on `section`, since GSAP's
     // own pin plugin mutates that element's box (inserts a pin-spacer),
     // which would otherwise retrigger this observer mid-pin and race with
-    // the scrub timeline it's rebuilding.
+    // the scrub timeline it's rebuilding. Width-only guard on top of that:
+    // this section's own pin-spacer insertion changes page height, which
+    // can change the scrollbar gutter and fire a genuine width-changing
+    // `resize` event even though nothing the user did actually changed
+    // the viewport — no need to rebuild for that.
     const handleResize = () => {
+      if (window.innerWidth === lastWidth) return;
+      lastWidth = window.innerWidth;
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
         build();
@@ -368,6 +392,7 @@ export default function PeopleOrbit({ id, centerLabel, team, partners, teamCopy,
     window.addEventListener("resize", handleResize);
 
     return () => {
+      cancelAnimationFrame(initialRebuildFrame);
       clearTimeout(resizeTimer);
       window.removeEventListener("resize", handleResize);
       trigger?.kill();

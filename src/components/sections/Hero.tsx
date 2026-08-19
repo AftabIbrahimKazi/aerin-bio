@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
-import { gsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import SmokeCanvas from "@/components/visuals/SmokeCanvas";
 import { BTN_GLOW } from "@/lib/buttonStyles";
 
@@ -224,6 +224,20 @@ export default function Hero() {
       };
 
       build();
+
+      // Deferred global refresh — Hero and PeopleOrbit (TeamAndPartners)
+      // each create their own pinned ScrollTrigger in their own effect.
+      // Both run in the same render pass, but GSAP's pin-spacer insertion
+      // for one can still be mid-flight when the other's ScrollTrigger.
+      // create() measures the page layout to compute its own trigger
+      // start position — PeopleOrbit's pin was activating ~800px too
+      // early because it read the page's height before Hero's spacer had
+      // grown to its full pinned distance, so its content rendered pinned
+      // over Hero's still-active sequence. One rAF is enough for React to
+      // have flushed every mount-time effect and for GSAP's own pin setup
+      // to settle; ScrollTrigger.refresh() then recalculates every
+      // registered trigger's start/end against that final layout.
+      requestAnimationFrame(() => ScrollTrigger.refresh());
 
       // Re-measure once web fonts are actually active. `layout()`'s first
       // run can land before next/font's Geist/Fragment Mono has swapped in

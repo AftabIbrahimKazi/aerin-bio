@@ -43,22 +43,42 @@ export function useScrollReveal(
     const items = section.querySelectorAll(selector);
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const ctx = gsap.context(() => {
-      if (prefersReducedMotion) {
-        gsap.set(items, blur !== undefined ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 1, y: 0 });
-        return;
-      }
-      gsap.from(items, {
-        opacity: 0,
-        y,
-        ...(blur !== undefined ? { filter: `blur(${blur}px)` } : {}),
-        duration,
-        ease,
-        ...(stagger !== undefined ? { stagger } : {}),
-        scrollTrigger: { trigger: section, start, once: true },
-      });
-    }, section);
+    if (prefersReducedMotion) {
+      gsap.set(items, blur !== undefined ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 1, y: 0 });
+      return;
+    }
 
-    return () => ctx.revert();
+    // The hidden starting state is set synchronously so there's no flash
+    // of fully-visible content, but the ScrollTrigger itself — which
+    // measures `section`'s position to resolve `start` — is created one
+    // frame later. Sections mounted alongside a large pinned sequence
+    // (e.g. this hook used on TeamAndPartners, right after Hero's pinned
+    // mask reveal) can have their trigger created in the same render pass
+    // as that pin, before its pin-spacer has actually been inserted —
+    // GSAP measures against that stale, too-short page and the reveal
+    // fires hundreds of pixels too early. One frame is enough for every
+    // mount-time effect (including any earlier pin's spacer insertion) to
+    // have settled.
+    gsap.set(items, { opacity: 0, y, ...(blur !== undefined ? { filter: `blur(${blur}px)` } : {}) });
+
+    let ctx: ReturnType<typeof gsap.context> | undefined;
+    const frame = requestAnimationFrame(() => {
+      ctx = gsap.context(() => {
+        gsap.to(items, {
+          opacity: 1,
+          y: 0,
+          ...(blur !== undefined ? { filter: "blur(0px)" } : {}),
+          duration,
+          ease,
+          ...(stagger !== undefined ? { stagger } : {}),
+          scrollTrigger: { trigger: section, start, once: true },
+        });
+      }, section);
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      ctx?.revert();
+    };
   }, [sectionRef, selector, y, duration, stagger, ease, blur, start]);
 }
