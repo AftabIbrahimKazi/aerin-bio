@@ -94,7 +94,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={label}
-                  className="text-[color:var(--foreground)]/50 transition-colors hover:text-[color:var(--foreground)]"
+                  className="text-[color:var(--foreground)]/70 transition-colors hover:text-[color:var(--foreground)]"
                 >
                   <Icon className="h-4 w-4" />
                 </a>
@@ -103,7 +103,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="relative grid grid-cols-1 items-center gap-4 pt-6 text-center text-xs text-[color:var(--foreground)]/40 sm:grid-cols-3 sm:text-left">
+        <div className="relative grid grid-cols-1 items-center gap-4 pt-6 text-center text-xs text-[color:var(--foreground)]/70 sm:grid-cols-3 sm:text-left">
           <EkgDivider orientation="horizontal" className="top-0" />
           <p>© {new Date().getFullYear()} Aerin Bio. All rights reserved.</p>
 

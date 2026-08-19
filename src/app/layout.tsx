@@ -78,6 +78,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           The real fix for the horizontal-scroll/rubber-band report is to
           find and eliminate the actual overflowing element, not to clip
           the root. */}
+      <head>
+        {/* Hero's LCP element is a CSS background-image (.hero-media in
+            hero.css), invisible to the browser's normal preload scanner
+            since it only shows up after the stylesheet loads. Preloading
+            it directly closes that gap — Lighthouse flagged a ~610ms
+            element-render delay caused by the browser not discovering
+            this image until CSS parse. */}
+        <link rel="preload" as="image" href="/hero-section.avif" fetchPriority="high" />
+      </head>
       <body className="min-h-full flex flex-col overflow-x-hidden" suppressHydrationWarning>
         <Script
           id="theme-init"

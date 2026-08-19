@@ -115,7 +115,7 @@ export default function Impact() {
           ))}
         </div>
 
-        <p className="mt-10 text-center text-xs text-[color:var(--foreground)]/40">
+        <p className="mt-10 text-center text-xs text-[color:var(--foreground)]/70">
           Data as of May 2024
         </p>
       </div>

@@ -149,7 +149,7 @@ export default function Blog() {
                       <p className="flex-1 text-sm leading-relaxed text-[color:var(--foreground)]/70 sm:text-base">
                         {post.excerpt}
                       </p>
-                      <div className="mt-2 flex items-center justify-between text-xs uppercase tracking-wide text-[color:var(--foreground)]/50">
+                      <div className="mt-2 flex items-center justify-between text-xs uppercase tracking-wide text-[color:var(--foreground)]/70">
                         <span>{post.date}</span>
                         <span>{post.readTime}</span>
                       </div>

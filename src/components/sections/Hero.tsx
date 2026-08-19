@@ -672,7 +672,7 @@ export default function Hero() {
               </a>
             </div>
 
-            <p className="text-xs text-[color:var(--foreground)]/40">
+            <p className="text-xs text-[color:var(--foreground)]/70">
               move your cursor — like breath disturbing mist
             </p>
           </div>
