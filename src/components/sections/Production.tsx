@@ -104,6 +104,7 @@ export default function Production() {
               loop
               muted
               playsInline
+              aria-hidden
               className="absolute inset-0 h-full w-full object-cover"
             />
             {/* Same two-gradient culture-green filter as before — kept on
@@ -131,6 +132,7 @@ export default function Production() {
               loop
               muted
               playsInline
+              aria-hidden
               className="absolute inset-0 h-full w-full object-cover"
             />
             {/* Same culture-green filter as the primary panel, kept on top
