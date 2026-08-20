@@ -48,7 +48,7 @@
    so the rotated cards' crop line lands flush at the viewport edge (reads
    as full-bleed) rather than inside a visible gutter (reads as cropped). */
 .testimonials-swiper .swiper {
-  overflow-x: hidden;
+  overflow-x: visible;
   overflow-y: visible;
   padding-top: 1.5rem;
   padding-bottom: 4rem;
